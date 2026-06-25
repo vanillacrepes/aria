@@ -1,3 +1,5 @@
+# aria | decisions
+
 ## Which framework?
 
 Electron vs Tauri
@@ -8,4 +10,19 @@ Electron vs Tauri
 - I can use tauri with react + vite, all is good.
 
 chosen: tauri
+
+---
+
+## which Spotify integration approach?
+
+two ways to control Spotify from a third-party app:
+
+1. **simulate keypresses** to the Spotify window using media keys
+2. **Spotify Web API** official API with OAuth
+
+1 works for free accounts and has zero latency, but it breaks whenever Spotify updates their app.
+
+2 requires Premium and has a slight network delay, but it's stable, official, and gives me everything. I have premium, and all the info + controls I need will be readily available.
+
+chosen: Spotify Web API
 
