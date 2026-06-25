@@ -14,6 +14,9 @@
     "core:window:allow-show",
     "global-shortcut:allow-is-registered",
     "global-shortcut:allow-register",
-    "global-shortcut:allow-unregister"
+    "global-shortcut:allow-unregister",
+    "shell:allow-open",
+    "deep-link:allow-get-current",
+    "deep-link:allow-is-registered"
   ]
 }
