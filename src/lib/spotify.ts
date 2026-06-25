@@ -1,7 +1,7 @@
 const clientId = "db0a3e81ad0c4da08ef0edeccb8c8faf";
 const redirectUri = "aria://callback";
 
-const scope = "user-read-private user-read-email";
+const scope = "user-read-private user-read-email user-read-playback-state user-modify-playback-state user-read-currently-playing";
 const authUrl = new URL("https://accounts.spotify.com/authorize?");
 
 // PKCE Functions
@@ -102,4 +102,21 @@ export function clearTokens() {
   localStorage.removeItem("spotify_access_token");
   localStorage.removeItem("spotify_refresh_token");
   localStorage.removeItem("spotify_token_expiry");
+}
+
+export async function spotifyFetch(endpoint: string, accessToken: string) {
+  const res = await fetch(`https://api.spotify.com/v1${endpoint}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!res.ok) throw new Error(`Spotify API error: ${res.status}`);
+  return res.json();
+}
+
+export async function getCurrentlyPlaying(accessToken: string) {
+  const res = await fetch("https://api.spotify.com/v1/me/player/currently-playing", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (res.status === 204) return null;
+  if (!res.ok) throw new Error(`Spotify API error: ${res.status}`);
+  return res.json();
 }

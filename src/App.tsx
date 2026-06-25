@@ -14,11 +14,32 @@ import { SkipBack, Play, SkipForward } from "lucide-react";
 
 import { register, unregister } from "@tauri-apps/plugin-global-shortcut";
 
+import { useSpotifyAuth } from "./hooks/useSpotifyAuth";
+import { useNowPlaying } from "./hooks/useNowPlaying";
+
 function App() {
   const [visible, setVisible] = useState(true);
   const mainRef = useRef<HTMLDivElement>(null);
+  const { accessToken, loading, login } = useSpotifyAuth();
+  const nowPlaying = useNowPlaying(accessToken);
+  const progress = nowPlaying
+    ? (nowPlaying.progress / nowPlaying.duration) * 100
+    : 0;
+  const prevTrackRef = useRef<string | null>(null);
+  const [animate, setAnimate] = useState(true);
 
   useEffect(() => {
+    const track = nowPlaying?.trackName ?? null;
+    if (prevTrackRef.current !== null && prevTrackRef.current !== track) {
+      setAnimate(false);
+      setTimeout(() => setAnimate(true), 50);
+    }
+    prevTrackRef.current = track;
+  }, [nowPlaying?.trackName]);
+
+  useEffect(() => {
+    if (accessToken) console.log("token:", accessToken);
+
     async function centerNotch() {
       const monitor = (await currentMonitor()) ?? (await primaryMonitor());
       if (!monitor) return;
@@ -36,7 +57,7 @@ function App() {
 
     register("CommandOrControl+Shift+S", async (event) => {
       if (event.state !== "Pressed") return;
-      
+
       const win = getCurrentWindow();
       const isVisible = await win.isVisible();
 
@@ -51,15 +72,13 @@ function App() {
     return () => {
       unregister("CommandOrControl+Shift+S");
     };
-  }, []);
+  }, [accessToken]);
 
   function handleTransitionEnd() {
     if (!visible) {
       getCurrentWindow().hide();
     }
   }
-
-  const progress = 32;
 
   return (
     <main
@@ -73,14 +92,18 @@ function App() {
     >
       <div className="w-full h-[60px] flex items-center justify-center gap-4">
         <img
-          src="https://i.scdn.co/image/ab67616d0000b2736a2ae719c17dbeec2682a4b7"
+          src={nowPlaying?.albumArt ?? ""}
           alt=""
           className="w-[40px] h-[40px] rounded-lg"
         />
 
         <div className="flex-col items-center justify-center">
-          <p className="text-white text-center text-sm">LLORONiTA</p>
-          <p className="text-white text-center text-[10px]">Ella Boh</p>
+          <p className="text-white text-center text-sm">
+            {nowPlaying?.trackName ?? "—"}
+          </p>
+          <p className="text-white text-center text-[10px]">
+            {nowPlaying?.artistName ?? "Nothing playing"}
+          </p>
         </div>
       </div>
 
@@ -102,15 +125,24 @@ function App() {
         <div className="relative w-60 h-1 bg-gray-700 rounded-full">
           <div
             className="h-full bg-white rounded-full"
-            style={{ width: `${progress}%` }}
+            style={{ width: `${progress}%`, transition: animate ? "width 3s linear" : "none" }}
           />
 
           <div
             className="absolute top-1/2 w-3 h-3 bg-white rounded-full -translate-y-1/2"
-            style={{ left: `calc(${progress}% - 6px)` }}
+            style={{
+              left: `calc(${progress}% - 6px)`,
+              transition: animate ? "left 3s linear" : "none" 
+            }}
           />
         </div>
       </div>
+
+      {!accessToken && (
+        <button onClick={login} className="text-white text-xs">
+          Connect Spotify
+        </button>
+      )}
     </main>
   );
 }

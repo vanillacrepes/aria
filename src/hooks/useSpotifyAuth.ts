@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { open } from "@tauri-apps/plugin-shell";
-import { onOpenUrl } from "@tauri-apps/plugin-deep-link";
+import { getCurrent, onOpenUrl } from "@tauri-apps/plugin-deep-link";
+import { listen } from "@tauri-apps/api/event";
 import {
   authorizePKCE,
   buildAuthUrl,
@@ -18,11 +19,13 @@ export function useSpotifyAuth() {
   useEffect(() => {
     async function init() {
       const { accessToken, refreshToken, expiry } = getStoredTokens();
+      const urls = await getCurrent();
 
       if (accessToken && Date.now() < expiry) {
         setAccessToken(accessToken);
         scheduleRefresh(expiry);
         setLoading(false);
+        return;
       } else if (refreshToken) {
         try {
           await refresh(refreshToken);
@@ -30,13 +33,16 @@ export function useSpotifyAuth() {
           clearTokens();
         }
         setLoading(false);
+        return;
       } else {
         setLoading(false);
+        return;
       }
     }
 
-    const promise = onOpenUrl(async (urls) => {
-      const url = urls[0];
+    init();
+
+    async function handleCallbackUrl(url: string) {
       if (!url.startsWith("aria://callback")) return;
 
       const code = new URL(url).searchParams.get("code");
@@ -59,12 +65,18 @@ export function useSpotifyAuth() {
       } catch (e) {
         console.error("Failed to get tokens", e);
       }
-    });
+    }
 
-    init();
+    const unlistenDeepLink = onOpenUrl((urls) => handleCallbackUrl(urls[0]));
+
+    const unlistenSingleInstance = listen<string[]>(
+      "deep-link-urls",
+      (event) => handleCallbackUrl(event.payload[0]),
+    );
 
     return () => {
-      promise.then((unlisten) => unlisten());
+      unlistenDeepLink.then((unlisten) => unlisten());
+      unlistenSingleInstance.then((unlisten) => unlisten());
     };
   }, []);
 
