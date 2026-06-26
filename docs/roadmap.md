@@ -39,3 +39,4 @@ make the buttons actually do things.
 - [x] skip back
 
 ## phase 6 | polish
+make it look pretty
