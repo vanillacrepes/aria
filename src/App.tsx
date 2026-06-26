@@ -92,86 +92,96 @@ function App() {
       onTransitionEnd={handleTransitionEnd}
       style={{
         transform: visible ? "translateY(0)" : "translateY(-100%)",
-        transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        transition:
+          "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), height 0.3s ease-in-out",
       }}
-      className="w-full h-full bg-black rounded-b-3xl overflow-hidden"
+      className={`w-full bg-black rounded-b-3xl overflow-hidden group h-[60px] ${accessToken ? "hover:h-[100px]" : ""}`}
     >
-      {/* song data container */}
-      <div className="w-full h-[60px] flex items-center justify-center gap-4">
-        <img
-          src={nowPlaying?.albumArt ?? ""}
-          alt=""
-          className="w-[40px] h-[40px] rounded-lg"
-        />
-
-        <div className="flex-col items-center justify-center">
-          <p className="text-white text-center text-sm max-w-[120px] truncate">
-            {nowPlaying?.trackName ?? "—"}
-          </p>
-          <p className="text-white text-center text-[10px]">
-            {nowPlaying?.artistName ?? "Nothing playing"}
-          </p>
+      {!accessToken ? (
+        <div className="w-full h-[60px] flex items-center justify-center">
+          <button
+            onClick={login}
+            className="text-white text-xs font-semibold px-4 py-1.5 rounded-full border border-white/20 hover:border-white hover:bg-white hover:text-black transition-all duration-200"
+          >
+            Connect Spotify
+          </button>
         </div>
-      </div>
+      ) : (
+        <>
+          {/* song data container */}
+          <div className="w-full h-[60px] flex items-center justify-center gap-4">
+            <img
+              src={nowPlaying?.albumArt ?? ""}
+              alt=""
+              className="w-[40px] h-[40px] rounded-lg"
+            />
 
-      {/* controls */}
-      <div className="flex items-center justify-center gap-6 pb-2">
-        <button
-          className="text-white"
-          onClick={() => accessToken && skipBack(accessToken)}
-        >
-          <SkipBack size={12} />
-        </button>
+            <div className="flex-col items-center justify-center">
+              <p className="text-white text-center text-sm max-w-[120px] truncate">
+                {nowPlaying?.trackName ?? "—"}
+              </p>
+              <p className="text-white text-center text-[10px]">
+                {nowPlaying?.artistName ?? "Nothing playing"}
+              </p>
+            </div>
+          </div>
 
-        <button
-          className="w-[16px] h-[16px] rounded-full bg-white text-black flex items-center justify-center"
-          onClick={() => {
-            if (!accessToken) return;
-            nowPlaying?.isPlaying
-              ? pausePlayback(accessToken)
-              : resumePlayback(accessToken);
-          }}
-        >
-          {nowPlaying?.isPlaying ? (
-            <Pause size={10} fill="currentColor" />
-          ) : (
-            <Play size={10} fill="currentColor" />
-          )}
-        </button>
+          {/* controls */}
+          <div className="flex items-center justify-center gap-6 pb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <button
+              className="text-white"
+              onClick={() => accessToken && skipBack(accessToken)}
+            >
+              <SkipBack size={12} />
+            </button>
 
-        <button
-          className="text-white"
-          onClick={() => accessToken && skipNext(accessToken)}
-        >
-          <SkipForward size={12} />
-        </button>
-      </div>
+            <button
+              className="w-[16px] h-[16px] rounded-full bg-white text-black flex items-center justify-center"
+              onClick={() => {
+                if (!accessToken) return;
+                nowPlaying?.isPlaying
+                  ? pausePlayback(accessToken)
+                  : resumePlayback(accessToken);
+              }}
+            >
+              {nowPlaying?.isPlaying ? (
+                <Pause size={10} fill="currentColor" />
+              ) : (
+                <Play size={10} fill="currentColor" />
+              )}
+            </button>
 
-      {/* progress bar */}
-      <div className="pb-2 flex items-center justify-center">
-        <div className="relative w-60 h-1 bg-gray-700 rounded-full">
-          <div
-            className="h-full bg-white rounded-full"
-            style={{
-              width: `${progress}%`,
-              transition: animate ? "width 3s linear" : "none",
-            }}
-          />
+            <button
+              className="text-white"
+              onClick={() => accessToken && skipNext(accessToken)}
+            >
+              <SkipForward size={12} />
+            </button>
+          </div>
 
-          <div
-            className="absolute top-1/2 w-3 h-3 bg-white rounded-full -translate-y-1/2"
-            style={{
-              left: `calc(${progress}% - 6px)`,
-              transition: animate ? "left 3s linear" : "none",
-            }}
-          />
-        </div>
-      </div>
+          {/* progress bar */}
+          <div className="pb-2 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <div className="relative w-60 h-1 bg-gray-700 rounded-full">
+              <div
+                className="h-full bg-white rounded-full"
+                style={{
+                  width: `${progress}%`,
+                  transition: animate ? "width 3s linear" : "none",
+                }}
+              />
 
-      {!accessToken && (
-        <button onClick={login} className="text-white text-xs">
-          Connect Spotify
-        </button>
+              <div
+                className="absolute top-1/2 w-3 h-3 bg-white rounded-full -translate-y-1/2 opacity-0 group-hover:opacity-100"
+                style={{
+                  left: `calc(${progress}% - 6px)`,
+                  transition: animate
+                    ? "left 3s linear, opacity 0.3s ease-in-out"
+                    : "opacity 0.3s ease-in-out",
+                }}
+              />
+            </div>
+          </div>
+        </>
       )}
     </main>
   );

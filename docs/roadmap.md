@@ -40,3 +40,5 @@ make the buttons actually do things.
 
 ## phase 6 | polish
 make it look pretty
+
+- [x] only show controls when notch is hovered
