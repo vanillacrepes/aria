@@ -10,12 +10,18 @@ import {
   currentMonitor,
 } from "@tauri-apps/api/window";
 
-import { SkipBack, Play, SkipForward } from "lucide-react";
+import { SkipBack, Play, SkipForward, Pause } from "lucide-react";
 
 import { register, unregister } from "@tauri-apps/plugin-global-shortcut";
 
 import { useSpotifyAuth } from "./hooks/useSpotifyAuth";
 import { useNowPlaying } from "./hooks/useNowPlaying";
+import {
+  pausePlayback,
+  resumePlayback,
+  skipNext,
+  skipBack,
+} from "./lib/spotify";
 
 function App() {
   const [visible, setVisible] = useState(true);
@@ -90,6 +96,7 @@ function App() {
       }}
       className="w-full h-full bg-black rounded-b-3xl overflow-hidden"
     >
+      {/* song data container */}
       <div className="w-full h-[60px] flex items-center justify-center gap-4">
         <img
           src={nowPlaying?.albumArt ?? ""}
@@ -98,7 +105,7 @@ function App() {
         />
 
         <div className="flex-col items-center justify-center">
-          <p className="text-white text-center text-sm">
+          <p className="text-white text-center text-sm max-w-[120px] truncate">
             {nowPlaying?.trackName ?? "—"}
           </p>
           <p className="text-white text-center text-[10px]">
@@ -107,32 +114,55 @@ function App() {
         </div>
       </div>
 
+      {/* controls */}
       <div className="flex items-center justify-center gap-6 pb-2">
-        <button className="text-white">
+        <button
+          className="text-white"
+          onClick={() => accessToken && skipBack(accessToken)}
+        >
           <SkipBack size={12} />
         </button>
 
-        <button className="w-[16px] h-[16px] rounded-full bg-white text-black flex items-center justify-center">
-          <Play size={10} fill="currentColor" />
+        <button
+          className="w-[16px] h-[16px] rounded-full bg-white text-black flex items-center justify-center"
+          onClick={() => {
+            if (!accessToken) return;
+            nowPlaying?.isPlaying
+              ? pausePlayback(accessToken)
+              : resumePlayback(accessToken);
+          }}
+        >
+          {nowPlaying?.isPlaying ? (
+            <Pause size={10} fill="currentColor" />
+          ) : (
+            <Play size={10} fill="currentColor" />
+          )}
         </button>
 
-        <button className="text-white">
+        <button
+          className="text-white"
+          onClick={() => accessToken && skipNext(accessToken)}
+        >
           <SkipForward size={12} />
         </button>
       </div>
 
+      {/* progress bar */}
       <div className="pb-2 flex items-center justify-center">
         <div className="relative w-60 h-1 bg-gray-700 rounded-full">
           <div
             className="h-full bg-white rounded-full"
-            style={{ width: `${progress}%`, transition: animate ? "width 3s linear" : "none" }}
+            style={{
+              width: `${progress}%`,
+              transition: animate ? "width 3s linear" : "none",
+            }}
           />
 
           <div
             className="absolute top-1/2 w-3 h-3 bg-white rounded-full -translate-y-1/2"
             style={{
               left: `calc(${progress}% - 6px)`,
-              transition: animate ? "left 3s linear" : "none" 
+              transition: animate ? "left 3s linear" : "none",
             }}
           />
         </div>

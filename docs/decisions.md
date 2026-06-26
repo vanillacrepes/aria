@@ -26,3 +26,8 @@ two ways to control Spotify from a third-party app:
 
 chosen: Spotify Web API
 
+---
+
+## how to handle the Windows deep-link callback?
+
+on Windows, `aria://callback` works by re-launching the app exe with the url as a command-line argument. to fix it, I used **tauri-plugin-single-instance** which intercepts the second launch, kills it, and forwards the URL to the existing instance via a custom emitted event.

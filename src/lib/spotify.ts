@@ -120,3 +120,31 @@ export async function getCurrentlyPlaying(accessToken: string) {
   if (!res.ok) throw new Error(`Spotify API error: ${res.status}`);
   return res.json();
 }
+
+export async function pausePlayback(accessToken: string) {
+  await fetch("https://api.spotify.com/v1/me/player/pause", {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${accessToken}` }
+  });
+}
+
+export async function resumePlayback(accessToken: string) {
+  await fetch("https://api.spotify.com/v1/me/player/play", {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${accessToken}` }
+  });
+}
+
+export async function skipNext(accessToken: string) {
+  await fetch("https://api.spotify.com/v1/me/player/next", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${accessToken}` }
+  });
+}
+
+export async function skipBack(accessToken: string) {
+  await fetch("https://api.spotify.com/v1/me/player/previous", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${accessToken}` }
+  });
+}
