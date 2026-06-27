@@ -10,8 +10,6 @@ import {
   currentMonitor,
 } from "@tauri-apps/api/window";
 
-import { SkipBack, Play, SkipForward, Pause } from "lucide-react";
-
 import { register, unregister } from "@tauri-apps/plugin-global-shortcut";
 
 import { useSpotifyAuth } from "./hooks/useSpotifyAuth";
@@ -21,8 +19,13 @@ import {
   resumePlayback,
   skipNext,
   skipBack,
-  seekToPosition
+  seekToPosition,
 } from "./lib/spotify";
+
+import { SongInfo } from "./components/songInfo";
+import { PlayerControls } from "./components/playerControls";
+import { ProgressBar } from "./components/progressBar";
+import { Login } from "./components/login";
 
 function App() {
   const [visible, setVisible] = useState(true);
@@ -38,18 +41,18 @@ function App() {
     : 0;
 
   const prevTrackRef = useRef<string | null>(null);
-  
+
   const [animate, setAnimate] = useState(true);
 
   const handleControl = async (action: () => Promise<void>) => {
-  if (!accessToken) return;
-  try {
-    await action();
-    setTimeout(fetchNowPlaying, 500);
-  } catch (e) {
-    console.error("Control action failed:", e);
-  }
-};
+    if (!accessToken) return;
+    try {
+      await action();
+      setTimeout(fetchNowPlaying, 500);
+    } catch (e) {
+      console.error("Control action failed:", e);
+    }
+  };
 
   useEffect(() => {
     const track = nowPlaying?.trackName ?? null;
@@ -115,92 +118,26 @@ function App() {
       className={`w-full bg-black rounded-b-3xl overflow-hidden group h-[60px] ${accessToken ? "hover:h-[100px]" : ""}`}
     >
       {!accessToken ? (
-        <div className="w-full h-[60px] flex items-center justify-center">
-          <button
-            onClick={login}
-            className="text-white text-xs font-semibold px-4 py-1.5 rounded-full border border-white/20 hover:border-white hover:bg-white hover:text-black transition-all duration-200"
-          >
-            Connect Spotify
-          </button>
-        </div>
+        <Login onLogin={login}/>
       ) : (
         <>
-          {/* song data container */}
-          <div className="w-full h-[60px] flex items-center justify-center gap-4">
-            <img
-              src={nowPlaying?.albumArt ?? ""}
-              alt=""
-              className="w-[40px] h-[40px] rounded-lg"
-            />
+          <SongInfo nowPlaying={nowPlaying} />
 
-            <div className="flex-col items-center justify-center">
-              <p className="text-white text-center text-sm max-w-[120px] truncate">
-                {nowPlaying?.trackName ?? "—"}
-              </p>
-              <p className="text-white text-center text-[10px]">
-                {nowPlaying?.artistName ?? "Nothing playing"}
-              </p>
-            </div>
-          </div>
+          <PlayerControls
+            isPlaying={nowPlaying?.isPlaying ?? false}
+            onPlayPause={() => {
+              if (!nowPlaying) return;
+              handleControl(() =>
+                nowPlaying.isPlaying
+                  ? pausePlayback(accessToken)
+                  : resumePlayback(accessToken),
+              );
+            }}
+            onSkipBack={() => handleControl(() => skipBack(accessToken))}
+            onSkipNext={() => handleControl(() => skipNext(accessToken))}
+          />
 
-          {/* controls */}
-          <div className="flex items-center justify-center gap-6 pb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <button
-              className="text-white"
-              onClick={() => handleControl(() => skipBack(accessToken))}
-            >
-              <SkipBack size={12} />
-            </button>
-
-            <button
-              className="w-[16px] h-[16px] rounded-full bg-white text-black flex items-center justify-center"
-              onClick={() => {
-                if (!nowPlaying) return;
-                handleControl(() =>
-                  nowPlaying.isPlaying
-                    ? pausePlayback(accessToken)
-                    : resumePlayback(accessToken)
-                );
-              }}
-            >
-              {nowPlaying?.isPlaying ? (
-                <Pause size={10} fill="currentColor" />
-              ) : (
-                <Play size={10} fill="currentColor" />
-              )}
-            </button>
-
-            <button
-              className="text-white"
-              onClick={() => handleControl(() => skipNext(accessToken))}
-            >
-              <SkipForward size={12} />
-            </button>
-          </div>
-
-          {/* progress bar */}
-          <div className="pb-2 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <div className="relative w-60 h-1 bg-gray-700 rounded-full">
-              <div
-                className="h-full bg-white rounded-full"
-                style={{
-                  width: `${progress}%`,
-                  transition: animate ? "width 3s linear" : "none",
-                }}
-              />
-
-                {/* I will actually make this work when I feel like it
-              <div
-                className="absolute top-1/2 w-3 h-3 bg-white rounded-full -translate-y-1/2 opacity-0 group-hover:opacity-100"
-                style={{
-                  left: `calc(${progress}% - 6px)`,
-                  transition: animate
-                    ? "left 3s linear, opacity 0.3s ease-in-out"
-                    : "opacity 0.3s ease-in-out",
-                }}
-              /> */}
-            </div>
-          </div>
+          <ProgressBar progress={progress} animate={animate} />
         </>
       )}
     </main>
