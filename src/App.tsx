@@ -1,19 +1,23 @@
-// import { invoke } from "@tauri-apps/api/core";
+// externals
 import "./App.css";
 
+// react
 import { useEffect, useRef, useState } from "react";
 
+// tauri
 import {
   getCurrentWindow,
   primaryMonitor,
   LogicalPosition,
   currentMonitor,
 } from "@tauri-apps/api/window";
-
 import { register, unregister } from "@tauri-apps/plugin-global-shortcut";
 
+// hooks
 import { useSpotifyAuth } from "./hooks/useSpotifyAuth";
 import { useNowPlaying } from "./hooks/useNowPlaying";
+
+// lib
 import {
   pausePlayback,
   resumePlayback,
@@ -22,10 +26,12 @@ import {
   seekToPosition,
 } from "./lib/spotify";
 
+// components
 import { SongInfo } from "./components/songInfo";
 import { PlayerControls } from "./components/playerControls";
 import { ProgressBar } from "./components/progressBar";
 import { Login } from "./components/login";
+
 
 function App() {
   const [visible, setVisible] = useState(true);
