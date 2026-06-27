@@ -1,7 +1,8 @@
 const clientId = "db0a3e81ad0c4da08ef0edeccb8c8faf";
 const redirectUri = "aria://callback";
 
-const scope = "user-read-private user-read-email user-read-playback-state user-modify-playback-state user-read-currently-playing";
+const scope =
+  "user-read-private user-read-email user-read-playback-state user-modify-playback-state user-read-currently-playing";
 const authUrl = new URL("https://accounts.spotify.com/authorize?");
 
 // PKCE Functions
@@ -62,7 +63,8 @@ export async function getTokens(code: string, verifier: string) {
     }),
   });
 
-  if (!response.ok) throw new Error(`Failed to get token: ${response.statusText}`);
+  if (!response.ok)
+    throw new Error(`Failed to get token: ${response.statusText}`);
   return response.json();
 }
 
@@ -77,16 +79,21 @@ export async function refreshToken(refreshToken: string) {
     }),
   });
 
-  if (!response.ok) throw new Error(`Failed to get token: ${response.statusText}`);
+  if (!response.ok)
+    throw new Error(`Failed to get token: ${response.statusText}`);
   return response.json();
 }
 
-export function saveTokens(accessToken: string, refreshToken: string, expiresIn: number) {
+export function saveTokens(
+  accessToken: string,
+  refreshToken: string,
+  expiresIn: number,
+) {
   localStorage.setItem("spotify_access_token", accessToken);
   localStorage.setItem("spotify_refresh_token", refreshToken);
   localStorage.setItem(
     "spotify_token_expiry",
-    String(Date.now() + expiresIn * 1000)
+    String(Date.now() + expiresIn * 1000),
   );
 }
 
@@ -113,9 +120,12 @@ export async function spotifyFetch(endpoint: string, accessToken: string) {
 }
 
 export async function getCurrentlyPlaying(accessToken: string) {
-  const res = await fetch("https://api.spotify.com/v1/me/player/currently-playing", {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
+  const res = await fetch(
+    "https://api.spotify.com/v1/me/player/currently-playing",
+    {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    },
+  );
   if (res.status === 204) return null;
   if (!res.ok) throw new Error(`Spotify API error: ${res.status}`);
   return res.json();
@@ -124,27 +134,37 @@ export async function getCurrentlyPlaying(accessToken: string) {
 export async function pausePlayback(accessToken: string) {
   await fetch("https://api.spotify.com/v1/me/player/pause", {
     method: "PUT",
-    headers: { Authorization: `Bearer ${accessToken}` }
+    headers: { Authorization: `Bearer ${accessToken}` },
   });
 }
 
 export async function resumePlayback(accessToken: string) {
   await fetch("https://api.spotify.com/v1/me/player/play", {
     method: "PUT",
-    headers: { Authorization: `Bearer ${accessToken}` }
+    headers: { Authorization: `Bearer ${accessToken}` },
   });
 }
 
 export async function skipNext(accessToken: string) {
   await fetch("https://api.spotify.com/v1/me/player/next", {
     method: "POST",
-    headers: { Authorization: `Bearer ${accessToken}` }
+    headers: { Authorization: `Bearer ${accessToken}` },
   });
 }
 
 export async function skipBack(accessToken: string) {
   await fetch("https://api.spotify.com/v1/me/player/previous", {
     method: "POST",
-    headers: { Authorization: `Bearer ${accessToken}` }
+    headers: { Authorization: `Bearer ${accessToken}` },
   });
+}
+
+export async function seekToPosition(accessToken: string, positionMs: number) {
+  await fetch(
+    `https://api.spotify.com/v1/me/player/seek?position_ms=${positionMs}`,
+    {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    },
+  );
 }

@@ -21,17 +21,24 @@ import {
   resumePlayback,
   skipNext,
   skipBack,
+  seekToPosition
 } from "./lib/spotify";
 
 function App() {
   const [visible, setVisible] = useState(true);
+
   const mainRef = useRef<HTMLDivElement>(null);
+
   const { accessToken, loading, login } = useSpotifyAuth();
+
   const nowPlaying = useNowPlaying(accessToken);
+
   const progress = nowPlaying
     ? (nowPlaying.progress / nowPlaying.duration) * 100
     : 0;
+
   const prevTrackRef = useRef<string | null>(null);
+  
   const [animate, setAnimate] = useState(true);
 
   useEffect(() => {
@@ -170,6 +177,7 @@ function App() {
                 }}
               />
 
+                {/* I will actually make this work when I feel like it
               <div
                 className="absolute top-1/2 w-3 h-3 bg-white rounded-full -translate-y-1/2 opacity-0 group-hover:opacity-100"
                 style={{
@@ -178,7 +186,7 @@ function App() {
                     ? "left 3s linear, opacity 0.3s ease-in-out"
                     : "opacity 0.3s ease-in-out",
                 }}
-              />
+              /> */}
             </div>
           </div>
         </>
