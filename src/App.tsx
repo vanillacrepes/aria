@@ -31,7 +31,7 @@ function App() {
 
   const { accessToken, loading, login } = useSpotifyAuth();
 
-  const nowPlaying = useNowPlaying(accessToken);
+  const { nowPlaying, fetchNowPlaying } = useNowPlaying(accessToken);
 
   const progress = nowPlaying
     ? (nowPlaying.progress / nowPlaying.duration) * 100
@@ -40,6 +40,16 @@ function App() {
   const prevTrackRef = useRef<string | null>(null);
   
   const [animate, setAnimate] = useState(true);
+
+  const handleControl = async (action: () => Promise<void>) => {
+  if (!accessToken) return;
+  try {
+    await action();
+    setTimeout(fetchNowPlaying, 500);
+  } catch (e) {
+    console.error("Control action failed:", e);
+  }
+};
 
   useEffect(() => {
     const track = nowPlaying?.trackName ?? null;
@@ -137,7 +147,7 @@ function App() {
           <div className="flex items-center justify-center gap-6 pb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <button
               className="text-white"
-              onClick={() => accessToken && skipBack(accessToken)}
+              onClick={() => handleControl(() => skipBack(accessToken))}
             >
               <SkipBack size={12} />
             </button>
@@ -145,10 +155,12 @@ function App() {
             <button
               className="w-[16px] h-[16px] rounded-full bg-white text-black flex items-center justify-center"
               onClick={() => {
-                if (!accessToken) return;
-                nowPlaying?.isPlaying
-                  ? pausePlayback(accessToken)
-                  : resumePlayback(accessToken);
+                if (!nowPlaying) return;
+                handleControl(() =>
+                  nowPlaying.isPlaying
+                    ? pausePlayback(accessToken)
+                    : resumePlayback(accessToken)
+                );
               }}
             >
               {nowPlaying?.isPlaying ? (
@@ -160,7 +172,7 @@ function App() {
 
             <button
               className="text-white"
-              onClick={() => accessToken && skipNext(accessToken)}
+              onClick={() => handleControl(() => skipNext(accessToken))}
             >
               <SkipForward size={12} />
             </button>
