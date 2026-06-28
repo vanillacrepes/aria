@@ -17,7 +17,7 @@ export function SongInfo({ nowPlaying }: SongInfoProps) {
         <p className="text-white text-center text-sm max-w-[120px] truncate">
           {nowPlaying?.trackName ?? "—"}
         </p>
-        <p className="text-white text-center text-[10px]">
+        <p className="text-white text-center text-[10px] max-w-[120px] truncate">
           {nowPlaying?.artistName ?? "Nothing playing"}
         </p>
       </div>

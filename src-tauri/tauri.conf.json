@@ -12,6 +12,7 @@
   "app": {
     "windows": [
       {
+        "label": "notch",
         "title": "aria",
         "width": 300,
         "height": 100,

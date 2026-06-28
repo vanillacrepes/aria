@@ -2,7 +2,8 @@
 use tauri_plugin_deep_link::DeepLinkExt;
 use tauri::{ Emitter, Manager };
 use tauri::menu::{ Menu, MenuItem };
-use tauri::tray::TrayIconBuilder;
+use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
+use tauri::WebviewWindowBuilder;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -25,18 +26,28 @@ pub fn run() {
         .setup(|app| {
             app.deep_link().register_all()?;
 
+            let open_i = MenuItem::with_id(app, "open", "Open Main", true, None::<&str>)?;
             let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
 
-            let menu = Menu::with_items(app, &[&quit_i])?;
+            let menu = Menu::with_items(app, &[&open_i, &quit_i])?;
+
             let _tray = TrayIconBuilder::new()
                 .icon(app.default_window_icon().unwrap().clone())
                 .menu(&menu)
                 .on_menu_event(|app, event| {
                     match event.id.as_ref() {
-                        "quit" => {
-                            app.exit(0);
-                        }
+                        "open" => open_main(app),
+                        "quit" => app.exit(0),
                         _ => {}
+                    }
+                })
+                .on_tray_icon_event(|tray, event| {
+                    if let TrayIconEvent::Click {
+                        button: MouseButton::Left,
+                        button_state: MouseButtonState::Up,
+                        ..
+                    } = event {
+                        open_main(tray.app_handle());
                     }
                 })
                 .build(app)?;
@@ -51,4 +62,26 @@ pub fn run() {
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+fn open_main(app: &tauri::AppHandle) {
+    if let Some(window) = app.get_webview_window("settings") {
+        let _ = window.show();
+        let _ = window.set_focus();
+        return;
+    }
+
+    let _ = WebviewWindowBuilder::new(
+        app,
+        "main-overlay",
+        tauri::WebviewUrl::App("index.html".into()),
+    )
+    .title("priestess")
+    .inner_size(480.0, 600.0)
+    .decorations(false)
+    .transparent(true)
+    .resizable(false)
+    .shadow(true)
+    .center()
+    .build();
 }

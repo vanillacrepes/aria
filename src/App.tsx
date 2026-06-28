@@ -1,89 +1,40 @@
-// externals
+import React, { useEffect, useState } from "react";
+import { getCurrentWindow } from "@tauri-apps/api/window";
+
 import "./App.css";
 
-// react
-import { useEffect, useRef, useState } from "react";
+const overlays: Record<string, React.LazyExoticComponent<() => React.ReactElement>> = {
+  "notch": React.lazy(() =>
+    import("./overlays/notch/Notch").then((m) => ({
+      default: m.Notch,
+    }))
+  ),
+  "main-overlay": React.lazy(() =>
+    import("./overlays/mainOverlay/MainOverlay").then((m) => ({
+      default: m.MainOverlay,
+    }))
+  ),
+};
 
-// hooks
-import { useSpotifyAuth } from "./hooks/useSpotifyAuth";
-import { useNowPlaying } from "./hooks/useNowPlaying";
-import { useTauriFront } from "./hooks/useTauriFront";
-import { useProgressAnimation } from "./hooks/useProgressAnimation";
+export default function App() {
+  const [label, setLabel] = useState<string | null>(null);
 
-// lib
-import {
-  pausePlayback,
-  resumePlayback,
-  skipNext,
-  skipBack,
-  seekToPosition,
-} from "./lib/spotify";
+  useEffect(() => {
+    setLabel(getCurrentWindow().label);
+  }, []);
 
-// components
-import { SongInfo } from "./components/songInfo";
-import { PlayerControls } from "./components/playerControls";
-import { ProgressBar } from "./components/progressBar";
-import { Login } from "./components/login";
+  if (!label) return null;
 
-function App() {
-  const { accessToken, loading, login } = useSpotifyAuth();
+  const Component = overlays[label];
 
-  const { nowPlaying, fetchNowPlaying } = useNowPlaying(accessToken);
-
-  const { visible, mainRef, handleTransitionEnd } = useTauriFront();
-
-  const animate = useProgressAnimation(nowPlaying?.trackName);
-
-  const progress = nowPlaying
-    ? (nowPlaying.progress / nowPlaying.duration) * 100
-    : 0;
-
-  const handleControl = async (action: () => Promise<void>) => {
-    if (!accessToken) return;
-    try {
-      await action();
-      setTimeout(fetchNowPlaying, 500);
-    } catch (e) {
-      console.error("Control action failed:", e);
-    }
-  };
+  if (!Component) {
+    console.error(`No component labeled :${label}`);
+    return null;
+  }
 
   return (
-    <main
-      ref={mainRef}
-      onTransitionEnd={handleTransitionEnd}
-      style={{
-        transform: visible ? "translateY(0)" : "translateY(-100%)",
-        transition:
-          "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), height 0.3s ease-in-out",
-      }}
-      className={`w-full bg-black rounded-b-3xl overflow-hidden group h-[60px] ${accessToken ? "hover:h-[100px]" : ""}`}
-    >
-      {!accessToken ? (
-        <Login onLogin={login} />
-      ) : (
-        <>
-          <SongInfo nowPlaying={nowPlaying} />
-
-          <PlayerControls
-            isPlaying={nowPlaying?.isPlaying ?? false}
-            onPlayPause={() => {
-              if (!nowPlaying) return;
-              handleControl(() =>
-                nowPlaying.isPlaying
-                  ? pausePlayback(accessToken)
-                  : resumePlayback(accessToken),
-              );
-            }}
-            onSkipBack={() => handleControl(() => skipBack(accessToken))}
-            onSkipNext={() => handleControl(() => skipNext(accessToken))}
-          />
-
-          <ProgressBar progress={progress} animate={animate} />
-        </>
-      )}
-    </main>
-  );
+    <React.Suspense fallback={null}>
+      <Component />
+    </React.Suspense>
+  )
 }
-
-export default App;
