@@ -4,18 +4,11 @@ import "./App.css";
 // react
 import { useEffect, useRef, useState } from "react";
 
-// tauri
-import {
-  getCurrentWindow,
-  primaryMonitor,
-  LogicalPosition,
-  currentMonitor,
-} from "@tauri-apps/api/window";
-import { register, unregister } from "@tauri-apps/plugin-global-shortcut";
-
 // hooks
 import { useSpotifyAuth } from "./hooks/useSpotifyAuth";
 import { useNowPlaying } from "./hooks/useNowPlaying";
+import { useTauriFront } from "./hooks/useTauriFront";
+import { useProgressAnimation } from "./hooks/useProgressAnimation";
 
 // lib
 import {
@@ -32,23 +25,18 @@ import { PlayerControls } from "./components/playerControls";
 import { ProgressBar } from "./components/progressBar";
 import { Login } from "./components/login";
 
-
 function App() {
-  const [visible, setVisible] = useState(true);
-
-  const mainRef = useRef<HTMLDivElement>(null);
-
   const { accessToken, loading, login } = useSpotifyAuth();
 
   const { nowPlaying, fetchNowPlaying } = useNowPlaying(accessToken);
 
+  const { visible, mainRef, handleTransitionEnd } = useTauriFront();
+
+  const animate = useProgressAnimation(nowPlaying?.trackName);
+
   const progress = nowPlaying
     ? (nowPlaying.progress / nowPlaying.duration) * 100
     : 0;
-
-  const prevTrackRef = useRef<string | null>(null);
-
-  const [animate, setAnimate] = useState(true);
 
   const handleControl = async (action: () => Promise<void>) => {
     if (!accessToken) return;
@@ -59,58 +47,6 @@ function App() {
       console.error("Control action failed:", e);
     }
   };
-
-  useEffect(() => {
-    const track = nowPlaying?.trackName ?? null;
-    if (prevTrackRef.current !== null && prevTrackRef.current !== track) {
-      setAnimate(false);
-      setTimeout(() => setAnimate(true), 50);
-    }
-    prevTrackRef.current = track;
-  }, [nowPlaying?.trackName]);
-
-  useEffect(() => {
-    if (accessToken) console.log("token:", accessToken);
-
-    async function centerNotch() {
-      const monitor = (await currentMonitor()) ?? (await primaryMonitor());
-      if (!monitor) return;
-
-      const notchWidth = 300;
-      const scaleFactor = monitor.scaleFactor;
-
-      const screenWidth = monitor.size.width / scaleFactor;
-      const x = Math.round(screenWidth / 2 - notchWidth / 2);
-
-      await getCurrentWindow().setPosition(new LogicalPosition(x, 0));
-    }
-
-    centerNotch();
-
-    register("CommandOrControl+Shift+S", async (event) => {
-      if (event.state !== "Pressed") return;
-
-      const win = getCurrentWindow();
-      const isVisible = await win.isVisible();
-
-      if (isVisible) {
-        setVisible(false);
-      } else {
-        await win.show();
-        setVisible(true);
-      }
-    });
-
-    return () => {
-      unregister("CommandOrControl+Shift+S");
-    };
-  }, [accessToken]);
-
-  function handleTransitionEnd() {
-    if (!visible) {
-      getCurrentWindow().hide();
-    }
-  }
 
   return (
     <main
@@ -124,7 +60,7 @@ function App() {
       className={`w-full bg-black rounded-b-3xl overflow-hidden group h-[60px] ${accessToken ? "hover:h-[100px]" : ""}`}
     >
       {!accessToken ? (
-        <Login onLogin={login}/>
+        <Login onLogin={login} />
       ) : (
         <>
           <SongInfo nowPlaying={nowPlaying} />
