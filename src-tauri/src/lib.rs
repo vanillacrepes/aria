@@ -1,4 +1,3 @@
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 use tauri_plugin_deep_link::DeepLinkExt;
 use tauri::{ Emitter, Manager };
 use tauri::menu::{ Menu, MenuItem };
